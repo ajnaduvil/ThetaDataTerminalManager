@@ -3,15 +3,15 @@
 
 import os
 
-# Version information - update these as needed
+# Version information - update these as needed (Semantic Versioning)
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
 VERSION_PATCH = 0
-VERSION_BUILD = 0
 
-# Construct version strings
-VERSION_STRING = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}.{VERSION_BUILD}"
-VERSION_TUPLE = (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, VERSION_BUILD)
+# Construct version strings (Semantic Versioning: MAJOR.MINOR.PATCH)
+VERSION_STRING = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}"
+# For PyInstaller, we need a 4-tuple, so we add 0 as the build number
+VERSION_TUPLE = (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, 0)
 
 # File information
 COMPANY_NAME = ""
@@ -73,6 +73,11 @@ VSVersionInfo(
 
 def get_version_string():
     """Get the version string"""
+    return VERSION_STRING
+
+
+def get_semantic_version():
+    """Get the semantic version string (MAJOR.MINOR.PATCH)"""
     return VERSION_STRING
 
 

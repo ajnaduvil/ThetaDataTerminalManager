@@ -32,6 +32,12 @@ config.json
 ThetaTerminal.jar
 *.log
 
+# Release artifacts
+releases/
+ThetaDataTerminalManager-v*/
+*.zip
+release_info_v*.txt
+
 # System files
 .DS_Store
 Thumbs.db 
