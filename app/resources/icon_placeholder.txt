@@ -1,0 +1,7 @@
+This is a placeholder file. 
+Replace this with a real .ico file named 'icon.ico' in this directory to use it as the application icon.
+
+For example:
+1. Create a 256x256 PNG icon
+2. Convert it to .ico format using a tool like https://convertio.co/png-ico/
+3. Place the .ico file in this directory and name it 'icon.ico' 

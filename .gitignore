@@ -1,0 +1,37 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# PyInstaller
+*.spec
+version_info.txt
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# uv
+uv.lock
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
+config.json
+ThetaTerminal.jar
+*.log
+
+# System files
+.DS_Store
+Thumbs.db 
