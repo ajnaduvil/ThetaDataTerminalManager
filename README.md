@@ -1,5 +1,7 @@
 # ThetaData Terminal Manager
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A Python application for managing [ThetaData's](https://www.thetadata.net/) ThetaTerminal.jar with a simple GUI interface.
 
 ## User Manual
@@ -246,11 +248,13 @@ uv run pyinstaller --name=ThetaDataTerminalManager --onefile --windowed main.py
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Author
 
 Created by [ajnaduvil](https://github.com/ajnaduvil)
+
+Copyright (c) 2025 ajnaduvil
 
 ## Troubleshooting
 
