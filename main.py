@@ -18,9 +18,10 @@ def main():
         print("Could not set window icon")
 
     # Create terminal managers for both supported terminal versions
+    terminal_order = ("v3", "v2")
     terminal_managers = {
-        key: TerminalManager(profile)
-        for key, profile in TERMINAL_PROFILES.items()
+        key: TerminalManager(TERMINAL_PROFILES[key])
+        for key in terminal_order
     }
 
     # Create the main window
