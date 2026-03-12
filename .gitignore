@@ -6,6 +6,8 @@ __pycache__/
 # Distribution / packaging
 dist/
 build/
+dist_release/
+build_release/
 *.egg-info/
 
 # PyInstaller
