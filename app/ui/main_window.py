@@ -505,8 +505,10 @@ class TerminalTab:
         return self.terminal_manager.is_running()
 
     def get_tab_title(self):
-        status_dot = "🟢" if self.is_running() else "🔴"
-        return f"{status_dot} {self.terminal_manager.profile.display_name}"
+        return self.terminal_manager.profile.display_name
+
+    def get_tab_status_key(self):
+        return "running" if self.is_running() else "stopped"
 
     def _append_log(self, message):
         self.frame.after(0, lambda: self._append_log_on_main_thread(message))
@@ -579,12 +581,18 @@ class MainWindow:
 
         self.notebook = ttk.Notebook(self.main_frame)
         self.notebook.pack(fill=tk.BOTH, expand=True)
+        self.tab_status_images = self._create_tab_status_images()
 
         self.tabs = {}
         for version_key, manager in self.terminal_managers.items():
             tab = TerminalTab(self.notebook, manager, self._start_requested)
             self.tabs[version_key] = tab
-            self.notebook.add(tab.frame, text=tab.get_tab_title())
+            self.notebook.add(
+                tab.frame,
+                text=tab.get_tab_title(),
+                image=self.tab_status_images[tab.get_tab_status_key()],
+                compound=tk.LEFT,
+            )
 
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
         self._select_saved_tab()
@@ -622,7 +630,37 @@ class MainWindow:
         self._refresh_tab_titles()
         self.root.after(1000, self._schedule_status_refresh)
 
+    def _create_status_dot_image(self, fill_color):
+        image = tk.PhotoImage(width=12, height=12)
+        image.put("", to=(0, 0, 12, 12))
+
+        dot_pixels = (
+            (4, 0, 8, 1),
+            (2, 1, 10, 2),
+            (1, 2, 11, 3),
+            (1, 3, 11, 9),
+            (0, 4, 12, 8),
+            (1, 8, 11, 9),
+            (1, 9, 11, 10),
+            (2, 10, 10, 11),
+            (4, 11, 8, 12),
+        )
+        for left, top, right, bottom in dot_pixels:
+            image.put(fill_color, to=(left, top, right, bottom))
+
+        return image
+
+    def _create_tab_status_images(self):
+        return {
+            "running": self._create_status_dot_image("#2e9b45"),
+            "stopped": self._create_status_dot_image("#8a8a8a"),
+        }
+
     def _refresh_tab_titles(self):
         for index, version_key in enumerate(self.tabs.keys()):
             tab = self.tabs[version_key]
-            self.notebook.tab(index, text=tab.get_tab_title())
+            self.notebook.tab(
+                index,
+                text=tab.get_tab_title(),
+                image=self.tab_status_images[tab.get_tab_status_key()],
+            )

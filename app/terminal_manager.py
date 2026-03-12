@@ -182,7 +182,7 @@ class TerminalManager:
 
     def get_selected_version(self):
         config = self._load_full_config()
-        return config.get("selected_version", "v2")
+        return config.get("selected_version", "v3")
 
     def set_selected_version(self, version_key):
         config = self._load_full_config()
