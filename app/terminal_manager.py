@@ -134,6 +134,21 @@ class TerminalManager:
         except Exception as exc:
             self._log(f"Error saving config: {exc}")
 
+    def _read_text_with_fallback(self, path, encodings=("utf-8", "cp1252", "latin-1")):
+        last_error = None
+        for encoding in encodings:
+            try:
+                with open(path, "r", encoding=encoding) as file:
+                    return file.read(), encoding
+            except UnicodeDecodeError as exc:
+                last_error = exc
+
+        if last_error:
+            raise last_error
+
+        with open(path, "r", encoding="utf-8", errors="replace") as file:
+            return file.read(), "utf-8"
+
     def load_config(self):
         """Load saved credentials for this terminal profile."""
         config = self._load_full_config()
@@ -627,8 +642,8 @@ class TerminalManager:
             return
 
         try:
-            with open(properties_path, "r", encoding="utf-8") as file:
-                for line in file:
+            content, encoding = self._read_text_with_fallback(properties_path)
+            for line in content.splitlines():
                     line = line.strip()
                     if line.startswith("MDDS_REGION="):
                         self.current_mdds_region = line.split("=", 1)[1]
@@ -658,8 +673,8 @@ class TerminalManager:
             return False
 
         try:
-            with open(properties_path, "r", encoding="utf-8") as file:
-                lines = file.readlines()
+            content, encoding = self._read_text_with_fallback(properties_path)
+            lines = content.splitlines(keepends=True)
 
             updated_lines = []
             for line in lines:
@@ -671,7 +686,7 @@ class TerminalManager:
                 else:
                     updated_lines.append(line)
 
-            with open(properties_path, "w", encoding="utf-8") as file:
+            with open(properties_path, "w", encoding=encoding) as file:
                 file.writelines(updated_lines)
 
             self.current_mdds_region = mdds_region

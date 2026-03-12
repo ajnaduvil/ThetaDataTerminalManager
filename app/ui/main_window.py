@@ -180,12 +180,12 @@ class TerminalTab:
         if self.terminal_manager.profile.key == "v3":
             self.info_var.set(
                 "v3 uses creds.txt beside ThetaTerminalv3.jar and launches via "
-                "java -jar ThetaTerminalv3.jar"
+                "java -jar ThetaTerminalv3.jar. You can run it alongside v2."
             )
         else:
             self.info_var.set(
                 "v2 launches with username/password CLI arguments and supports "
-                "server region configuration."
+                "server region configuration. You can run it alongside v3."
             )
 
     def _note_missing_jar(self):
@@ -501,6 +501,13 @@ class TerminalTab:
 
         self.frame.update_idletasks()
 
+    def is_running(self):
+        return self.terminal_manager.is_running()
+
+    def get_tab_title(self):
+        status_dot = "🟢" if self.is_running() else "🔴"
+        return f"{status_dot} {self.terminal_manager.profile.display_name}"
+
     def _append_log(self, message):
         self.frame.after(0, lambda: self._append_log_on_main_thread(message))
 
@@ -577,10 +584,11 @@ class MainWindow:
         for version_key, manager in self.terminal_managers.items():
             tab = TerminalTab(self.notebook, manager, self._start_requested)
             self.tabs[version_key] = tab
-            self.notebook.add(tab.frame, text=manager.profile.display_name)
+            self.notebook.add(tab.frame, text=tab.get_tab_title())
 
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
         self._select_saved_tab()
+        self._schedule_status_refresh()
 
     def _select_saved_tab(self):
         default_version = self.terminal_managers["v2"].get_selected_version()
@@ -604,28 +612,17 @@ class MainWindow:
         version_key = self.get_active_version_key()
         return self.tabs.get(version_key)
 
-    def any_other_manager_running(self, version_key):
-        return any(
-            key != version_key and manager.is_running()
-            for key, manager in self.terminal_managers.items()
-        )
-
     def _start_requested(self, tab):
         version_key = tab.terminal_manager.profile.key
         self.terminal_managers[version_key].set_selected_version(version_key)
 
-        if self.any_other_manager_running(version_key):
-            messagebox.showwarning(
-                "Another Terminal Is Running",
-                (
-                    "Please stop the other ThetaTerminal version before starting this one.\n\n"
-                    "Running v2 and v3 at the same time may cause local port or resource conflicts."
-                ),
-                parent=self.root,
-            )
-            tab._append_log(
-                "Start blocked because another ThetaTerminal version is already running."
-            )
-            return
-
         tab.start_terminal()
+
+    def _schedule_status_refresh(self):
+        self._refresh_tab_titles()
+        self.root.after(1000, self._schedule_status_refresh)
+
+    def _refresh_tab_titles(self):
+        for index, version_key in enumerate(self.tabs.keys()):
+            tab = self.tabs[version_key]
+            self.notebook.tab(index, text=tab.get_tab_title())

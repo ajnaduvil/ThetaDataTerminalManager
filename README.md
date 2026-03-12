@@ -48,7 +48,8 @@ This section is for users who just want to use the ThetaData Terminal Manager ap
    - Click the "Start" button on the selected tab to launch ThetaTerminal
    - **v2** runs with the legacy CLI credential flow
    - **v3** writes a `creds.txt` file beside `ThetaTerminalv3.jar` and launches using `java -jar ThetaTerminalv3.jar`
-   - Only one version should be run at a time to avoid local conflicts
+   - Both versions can be started independently from their own tabs
+   - Each tab shows a red or green status dot so you can quickly see whether that terminal is running
    - The log area will show the terminal's output
    - Wait for the terminal to fully initialize before using it
    
@@ -127,6 +128,7 @@ This section contains technical information for developers who want to build, mo
 - Saves and loads credentials separately for v2 and v3
 - Starts and stops each terminal version with dedicated controls
 - Uses a version-specific log view, config folder, and runtime status
+- Shows a red/green status indicator on each terminal tab
 - Provides the v2 server settings editor for MDDS/FPSS configuration
 - Writes `creds.txt` automatically for ThetaTerminal v3 launches
 
