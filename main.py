@@ -2,8 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 import threading
 import sys
-import os
-from app.terminal_manager import TerminalManager
+from app.terminal_manager import TERMINAL_PROFILES, TerminalManager
 from app.ui.main_window import MainWindow
 from app.ui import set_window_icon
 
@@ -18,18 +17,30 @@ def main():
     else:
         print("Could not set window icon")
 
-    # Create the terminal manager
-    terminal_manager = TerminalManager()
+    # Create terminal managers for both supported terminal versions
+    terminal_managers = {
+        key: TerminalManager(profile)
+        for key, profile in TERMINAL_PROFILES.items()
+    }
 
     # Create the main window
-    main_window = MainWindow(root, terminal_manager)
+    main_window = MainWindow(root, terminal_managers)
 
     # Set up proper exit handling
     def on_closing():
-        if terminal_manager.is_running():
+        running_managers = [
+            manager
+            for manager in terminal_managers.values()
+            if manager.is_running()
+        ]
+
+        if running_managers:
             if messagebox.askyesno(
                 "Confirm Exit",
-                "Terminal is still running. Do you want to stop it and exit?",
+                (
+                    "One or more terminals are still running. "
+                    "Do you want to stop them and exit?"
+                ),
                 parent=root,
             ):
                 # Disable window interactions and show status
@@ -42,14 +53,13 @@ def main():
                 # Stop terminal in background - simplified approach
                 def stop_and_exit():
                     try:
-                        # Our simplified stop_terminal already has built-in timeout
-                        stop_success = terminal_manager.stop_terminal()
-
-                        if not stop_success:
-                            print("Warning: Terminal may not have stopped cleanly")
-
-                        # Force cleanup and exit
-                        terminal_manager.cleanup()
+                        for manager in running_managers:
+                            stop_success = manager.stop_terminal()
+                            if not stop_success:
+                                print(
+                                    f"Warning: {manager.profile.display_name} may not have stopped cleanly"
+                                )
+                            manager.cleanup()
 
                     except Exception as e:
                         print(f"Error during shutdown: {e}")

@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Python application for managing [ThetaData's](https://www.thetadata.net/) ThetaTerminal.jar with a simple GUI interface.
+A Python application for managing [ThetaData's](https://www.thetadata.net/) ThetaTerminal v2 and ThetaTerminal v3 from a simple GUI interface.
 
 ## User Manual
 
@@ -18,7 +18,8 @@ This section is for users who just want to use the ThetaData Terminal Manager ap
 
 2. **First Time Setup**
    - Double-click `ThetaDataTerminalManager.exe` to launch the application
-   - You will be prompted to download the thetaterminal.jar file if it's not present
+   - Use the **ThetaTerminal v2** or **ThetaTerminal v3** tab depending on which runtime you want to manage
+   - The application will download the required JAR file automatically when you click **Start** if it is not already present
    
    ![First Launch Screenshot](docs/first-launch.png)
    ![Downloading ThetaTerminal](docs/downloading-thetaterminal.png) 
@@ -26,23 +27,28 @@ This section is for users who just want to use the ThetaData Terminal Manager ap
    
 
 3. **Using the Application**
-   - Enter your [ThetaData](https://www.thetadata.net/) username and password in the provided fields   
+   - Choose either the **ThetaTerminal v2** tab or **ThetaTerminal v3** tab
+   - Enter your [ThetaData](https://www.thetadata.net/) username/email and password in the provided fields   
    ![Main Interface Screenshot](docs/main-interface.png)
    
+   - **Tabs**: Use separate tabs for v2 and v3 management
    - **Username/Password**: Enter your ThetaData credentials
    - **Show Password**: Check this box to reveal your password while typing
-   - **Save Credentials**: Your credentials will be saved securely for future use
-   - **Start Button**: Click to launch the ThetaTerminal
-   - **Stop Button**: Click to terminate the ThetaTerminal
+   - **Save Credentials**: Credentials are saved per version for future use
+   - **Start Button**: Click to launch the selected ThetaTerminal version
+   - **Stop Button**: Click to terminate the selected ThetaTerminal version
    - **Logs Button**: Open the logs folder to view ThetaTerminal log files
    - **Config Button**: Open the configuration folder
-   - **Servers Button**: Configure server regions (MDDS/FPSS settings)
-   - **Log Area**: View real-time output from the terminal
+   - **Servers Button**: Available on the v2 tab only for server-region configuration (MDDS/FPSS)
+   - **Log Area**: View real-time output for the selected terminal version
    - **Clear Log**: Clear the log display
    - **Copy Log**: Copy log contents to clipboard
 
 4. **Starting the Terminal**
-   - Click the "Start" button to launch ThetaTerminal
+   - Click the "Start" button on the selected tab to launch ThetaTerminal
+   - **v2** runs with the legacy CLI credential flow
+   - **v3** writes a `creds.txt` file beside `ThetaTerminalv3.jar` and launches using `java -jar ThetaTerminalv3.jar`
+   - Only one version should be run at a time to avoid local conflicts
    - The log area will show the terminal's output
    - Wait for the terminal to fully initialize before using it
    
@@ -67,9 +73,10 @@ This section is for users who just want to use the ThetaData Terminal Manager ap
 #### System Requirements
 
 - **Operating System**: Windows 10 or newer
-- **Java**: Java Runtime Environment (JRE) 8 or newer must be installed
+- **Java for v2**: Java Runtime Environment (JRE) 8 or newer
+- **Java for v3**: Java 21 or newer
   - Download from: https://www.java.com/download/
-- **Internet Connection**: Required for initial ThetaTerminal.jar download
+- **Internet Connection**: Required for the initial ThetaTerminal JAR download
 
 #### Troubleshooting
 
@@ -115,16 +122,19 @@ This section contains technical information for developers who want to build, mo
 
 ## Features
 
-- Automatically downloads ThetaTerminal.jar if not present
-- Saves and loads username/password credentials
-- Start and stop ThetaTerminal with a click
-- Log viewing with clear and copy functionality
-- Password reveal option for ease of use
+- Supports both ThetaTerminal v2 and ThetaTerminal v3 in one application
+- Automatically downloads the required terminal JAR if not present
+- Saves and loads credentials separately for v2 and v3
+- Starts and stops each terminal version with dedicated controls
+- Uses a version-specific log view, config folder, and runtime status
+- Provides the v2 server settings editor for MDDS/FPSS configuration
+- Writes `creds.txt` automatically for ThetaTerminal v3 launches
 
 ## Requirements
 
 - Python 3.12 or newer
-- Java Runtime Environment (JRE) for running ThetaTerminal.jar
+- Java Runtime Environment (JRE) 8+ for ThetaTerminal v2
+- Java 21+ for ThetaTerminal v3
 - uv package manager
 
 ## Installation
@@ -165,10 +175,11 @@ source .venv/bin/activate  # On Unix/macOS
 python main.py
 ```
 
-1. Enter your ThetaData username and password
-2. Click "Start" to launch the terminal
-3. The log area will display output from the terminal
-4. Click "Stop" to terminate the terminal when done
+1. Open the v2 or v3 tab
+2. Enter your ThetaData username/email and password
+3. Click "Start" to launch the selected terminal version
+4. The log area will display output from that terminal
+5. Click "Stop" to terminate the terminal when done
 
 ## Development
 
@@ -241,8 +252,8 @@ uv run pyinstaller --name=ThetaDataTerminalManager --onefile --windowed main.py
 ## Structure
 
 - `main.py` - Entry point for the application
-- `app/terminal_manager.py` - Core logic for managing the terminal
-- `app/ui/main_window.py` - User interface implementation
+- `app/terminal_manager.py` - Core logic for managing ThetaTerminal v2 and v3
+- `app/ui/main_window.py` - Tabbed user interface for v2/v3 management
 - `build.py` - Build script for creating the executable
 - `pyproject.toml` - Project configuration and dependencies
 
@@ -271,7 +282,7 @@ If you see warnings about `VIRTUAL_ENV` not matching or if you have an old pipen
 If the build fails:
 1. Ensure all dependencies are installed: `uv sync`
 2. Check that Python 3.12+ is available
-3. Verify Java Runtime Environment is installed for ThetaTerminal.jar
+3. Verify the required Java version is installed for the terminal version you want to run
 
 ### Icon Issues
 

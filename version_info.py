@@ -15,7 +15,7 @@ VERSION_TUPLE = (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, 0)
 
 # File information
 COMPANY_NAME = ""
-FILE_DESCRIPTION = "ThetaData Terminal Manager - GUI for managing ThetaTerminal.jar"
+FILE_DESCRIPTION = "ThetaData Terminal Manager - GUI for managing ThetaTerminal v2 and v3"
 FILE_VERSION = VERSION_STRING
 INTERNAL_NAME = "ThetaDataTerminalManager"
 ORIGINAL_FILENAME = "ThetaDataTerminalManager.exe"

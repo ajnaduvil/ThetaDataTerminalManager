@@ -1,31 +1,26 @@
-import tkinter as tk
-from tkinter import ttk
-import pyperclip
 import os
 import threading
-import time
-from tkinter import messagebox
+import tkinter as tk
+from tkinter import messagebox, ttk
+
+import pyperclip
+
 from . import set_window_icon
 
 
 class ServerSettingsDialog:
     def __init__(self, parent, terminal_manager):
-        # Create a new top-level window
         self.dialog = tk.Toplevel(parent)
         self.dialog.title("Server Settings")
         self.dialog.transient(parent)
-        self.dialog.grab_set()  # Modal dialog
+        self.dialog.grab_set()
 
-        # Set the icon for the dialog
         set_window_icon(self.dialog)
 
-        # Make dialog appear in center of parent
-        self.dialog.geometry("400x250")  # Increased height to accommodate buttons
+        self.dialog.geometry("400x250")
         self.dialog.resizable(False, False)
 
         self.terminal_manager = terminal_manager
-
-        # Check if config file exists
         self.config_exists = os.path.exists(
             os.path.join(self.terminal_manager.config_folder, "config_0.properties")
         )
@@ -33,14 +28,11 @@ class ServerSettingsDialog:
         self.create_widgets()
 
     def create_widgets(self):
-        # Get current server regions
         settings = self.terminal_manager.get_server_regions()
 
-        # Create main frame with padding
         main_frame = ttk.Frame(self.dialog, padding="20")
         main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Title and info
         ttk.Label(
             main_frame, text="Server Region Settings", font=("", 12, "bold")
         ).pack(anchor=tk.W, pady=(0, 10))
@@ -48,105 +40,96 @@ class ServerSettingsDialog:
         if not self.config_exists:
             ttk.Label(
                 main_frame,
-                text="Configuration file not found. Settings cannot be changed.\nRun ThetaTerminal first to create the configuration file.",
+                text=(
+                    "Configuration file not found. Settings cannot be changed.\n"
+                    "Run ThetaTerminal v2 first to create the configuration file."
+                ),
                 foreground="red",
             ).pack(anchor=tk.W, pady=(0, 10))
 
-        # MDDS Region selection
         mdds_frame = ttk.Frame(main_frame)
         mdds_frame.pack(fill=tk.X, pady=(0, 10))
-
         ttk.Label(mdds_frame, text="MDDS Region:").pack(side=tk.LEFT)
 
         self.mdds_var = tk.StringVar(value=settings["mdds_region"])
-        mdds_combo = ttk.Combobox(
+        ttk.Combobox(
             mdds_frame,
             textvariable=self.mdds_var,
             values=settings["mdds_options"],
             state="readonly" if self.config_exists else "disabled",
             width=20,
-        )
-        mdds_combo.pack(side=tk.RIGHT)
+        ).pack(side=tk.RIGHT)
 
-        # FPSS Region selection
         fpss_frame = ttk.Frame(main_frame)
         fpss_frame.pack(fill=tk.X, pady=(0, 10))
-
         ttk.Label(fpss_frame, text="FPSS Region:").pack(side=tk.LEFT)
 
         self.fpss_var = tk.StringVar(value=settings["fpss_region"])
-        fpss_combo = ttk.Combobox(
+        ttk.Combobox(
             fpss_frame,
             textvariable=self.fpss_var,
             values=settings["fpss_options"],
             state="readonly" if self.config_exists else "disabled",
             width=20,
-        )
-        fpss_combo.pack(side=tk.RIGHT)
+        ).pack(side=tk.RIGHT)
 
-        # Warning about non-production servers
         ttk.Label(
             main_frame,
-            text="Warning: STAGE and DEV servers are for testing only.\nThey may be unstable and have incomplete data.",
+            text=(
+                "Warning: STAGE and DEV servers are for testing only.\n"
+                "They may be unstable and have incomplete data."
+            ),
             foreground="red",
         ).pack(anchor=tk.W, pady=(5, 10))
 
-        # Add a separator before buttons
         ttk.Separator(main_frame, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=10)
 
-        # Button frame - ensure it's at the bottom with fixed height
         button_frame = ttk.Frame(main_frame)
         button_frame.pack(fill=tk.X, pady=(10, 0), side=tk.BOTTOM)
 
-        # Reset button (left side)
-        reset_btn = ttk.Button(
+        ttk.Button(
             button_frame,
             text="Reset to Production",
             command=self.reset_to_production,
             state=tk.NORMAL if self.config_exists else tk.DISABLED,
+        ).pack(side=tk.LEFT)
+
+        ttk.Button(button_frame, text="Close", command=self.dialog.destroy).pack(
+            side=tk.RIGHT, padx=(5, 0)
         )
-        reset_btn.pack(side=tk.LEFT)
 
-        # Cancel button
-        cancel_btn = ttk.Button(button_frame, text="Close", command=self.dialog.destroy)
-        cancel_btn.pack(side=tk.RIGHT, padx=(5, 0))
-
-        # Apply button
-        apply_btn = ttk.Button(
+        ttk.Button(
             button_frame,
             text="Apply",
             command=self.apply_settings,
             state=tk.NORMAL if self.config_exists else tk.DISABLED,
-        )
-        apply_btn.pack(side=tk.RIGHT)
+        ).pack(side=tk.RIGHT)
 
     def reset_to_production(self):
-        """Reset server regions to production defaults"""
-        # Set to production server values
         self.mdds_var.set("MDDS_NJ_HOSTS")
         self.fpss_var.set("FPSS_NJ_HOSTS")
-
-        # Apply the settings automatically
         self.apply_settings()
 
     def apply_settings(self):
         if not self.config_exists:
             messagebox.showinfo(
                 "Configuration Missing",
-                "Cannot apply settings. Run ThetaTerminal first to create the configuration file.",
+                "Cannot apply settings. Run ThetaTerminal v2 first to create the configuration file.",
                 parent=self.dialog,
             )
             return
 
-        mdds_region = self.mdds_var.get()
-        fpss_region = self.fpss_var.get()
-
-        success = self.terminal_manager.update_server_regions(mdds_region, fpss_region)
+        success = self.terminal_manager.update_server_regions(
+            self.mdds_var.get(), self.fpss_var.get()
+        )
 
         if success:
             messagebox.showinfo(
                 "Settings Applied",
-                "Server settings have been updated. The changes will take effect the next time ThetaTerminal starts.",
+                (
+                    "Server settings have been updated. The changes will take effect "
+                    "the next time ThetaTerminal v2 starts."
+                ),
                 parent=self.dialog,
             )
             self.dialog.destroy()
@@ -158,31 +141,25 @@ class ServerSettingsDialog:
             )
 
 
-class MainWindow:
-    def __init__(self, root, terminal_manager):
-        self.root = root
+class TerminalTab:
+    def __init__(self, parent, terminal_manager, start_callback):
+        self.parent = parent
         self.terminal_manager = terminal_manager
+        self.start_callback = start_callback
+        self.frame = ttk.Frame(parent, padding="10")
 
-        # Set a minimum size for the window
-        self.root.minsize(600, 400)
+        self.username_var = tk.StringVar(value=self.terminal_manager.username)
+        self.password_var = tk.StringVar(value=self.terminal_manager.password)
+        self.show_password = tk.BooleanVar(value=False)
+        self.status_var = tk.StringVar()
+        self.info_var = tk.StringVar()
 
-        # Configure the main frame with padding
-        self.main_frame = ttk.Frame(root, padding="10")
-        self.main_frame.pack(fill=tk.BOTH, expand=True)
-
-        # Create the credential frame at the top
+        self._create_header()
         self._create_credential_frame()
-
-        # Create the control frame with start/stop buttons
         self._create_control_frame()
-
-        # Create the log area
+        self._create_progress_bar()
         self._create_log_area()
 
-        # Create download progress bar (hidden by default)
-        self._create_progress_bar()
-
-        # Set the callbacks
         self.terminal_manager.set_log_callback(self._append_log)
         self.terminal_manager.set_download_progress_callback(self._update_progress)
         self.terminal_manager.set_download_complete_callback(self._download_complete)
@@ -190,39 +167,77 @@ class MainWindow:
             self._auto_start_complete
         )
 
-        # Initialize UI state
+        self._set_default_messages()
+        self._note_missing_jar()
         self._update_ui_state()
 
-        # Check if JAR file exists on startup
-        self._check_jar_file()
+    def _set_default_messages(self):
+        self.status_var.set(
+            f"{self.terminal_manager.profile.display_name} requires Java "
+            f"{self.terminal_manager.profile.java_min_version}+"
+        )
+
+        if self.terminal_manager.profile.key == "v3":
+            self.info_var.set(
+                "v3 uses creds.txt beside ThetaTerminalv3.jar and launches via "
+                "java -jar ThetaTerminalv3.jar"
+            )
+        else:
+            self.info_var.set(
+                "v2 launches with username/password CLI arguments and supports "
+                "server region configuration."
+            )
+
+    def _note_missing_jar(self):
+        if not self.terminal_manager.check_jar_file():
+            self._append_log(
+                f"{self.terminal_manager.profile.jar_file} is not downloaded yet. "
+                "Click Start to download and launch it automatically."
+            )
+
+    def _create_header(self):
+        header_frame = ttk.Frame(self.frame)
+        header_frame.pack(fill=tk.X, pady=(0, 10))
+
+        ttk.Label(
+            header_frame,
+            text=self.terminal_manager.profile.display_name,
+            font=("", 13, "bold"),
+        ).pack(anchor=tk.W)
+
+        ttk.Label(
+            header_frame,
+            textvariable=self.status_var,
+            foreground="#0b5394",
+        ).pack(anchor=tk.W, pady=(2, 0))
+
+        ttk.Label(
+            header_frame,
+            textvariable=self.info_var,
+            wraplength=760,
+            foreground="#555555",
+        ).pack(anchor=tk.W, pady=(2, 0))
 
     def _create_credential_frame(self):
-        """Create the frame for username and password inputs"""
-        cred_frame = ttk.Frame(self.main_frame)
+        cred_frame = ttk.Frame(self.frame)
         cred_frame.pack(fill=tk.X, pady=(0, 10))
 
-        # Username
-        ttk.Label(cred_frame, text="Username:").grid(
+        ttk.Label(cred_frame, text="Username / Email:").grid(
             row=0, column=0, sticky=tk.W, padx=(0, 5)
         )
-        self.username_var = tk.StringVar(value=self.terminal_manager.username)
         self.username_entry = ttk.Entry(
-            cred_frame, textvariable=self.username_var, width=20
+            cred_frame, textvariable=self.username_var, width=24
         )
         self.username_entry.grid(row=0, column=1, sticky=tk.W, padx=(0, 10))
 
-        # Password
         ttk.Label(cred_frame, text="Password:").grid(
             row=0, column=2, sticky=tk.W, padx=(10, 5)
         )
-        self.password_var = tk.StringVar(value=self.terminal_manager.password)
         self.password_entry = ttk.Entry(
-            cred_frame, textvariable=self.password_var, show="*", width=20
+            cred_frame, textvariable=self.password_var, show="*", width=24
         )
         self.password_entry.grid(row=0, column=3, sticky=tk.W)
 
-        # Show/Hide password button
-        self.show_password = tk.BooleanVar(value=False)
         self.show_password_btn = ttk.Checkbutton(
             cred_frame,
             text="Show",
@@ -232,27 +247,20 @@ class MainWindow:
         self.show_password_btn.grid(row=0, column=4, sticky=tk.W, padx=(5, 0))
 
     def _toggle_password_visibility(self):
-        """Toggle password visibility"""
-        if self.show_password.get():
-            self.password_entry.config(show="")
-        else:
-            self.password_entry.config(show="*")
+        self.password_entry.config(show="" if self.show_password.get() else "*")
 
     def _create_control_frame(self):
-        """Create the frame with control buttons"""
-        self.control_frame = ttk.Frame(self.main_frame)
+        self.control_frame = ttk.Frame(self.frame)
         self.control_frame.pack(fill=tk.X, pady=(0, 10))
 
-        # Start button with icon color
         self.start_btn = ttk.Button(
             self.control_frame,
             text="▶ Start",
-            command=self._start_terminal,
+            command=self._request_start,
             style="Green.TButton",
         )
         self.start_btn.pack(side=tk.LEFT, padx=(0, 5))
 
-        # Stop button with icon color
         self.stop_btn = ttk.Button(
             self.control_frame,
             text="■ Stop",
@@ -261,12 +269,10 @@ class MainWindow:
         )
         self.stop_btn.pack(side=tk.LEFT)
 
-        # Create a separator
         ttk.Separator(self.control_frame, orient=tk.VERTICAL).pack(
             side=tk.LEFT, padx=10, fill=tk.Y
         )
 
-        # Folder access buttons
         ttk.Button(
             self.control_frame,
             text="📁 Logs",
@@ -279,170 +285,72 @@ class MainWindow:
             command=self._open_config_folder,
         ).pack(side=tk.LEFT, padx=(0, 5))
 
-        # Server settings button
-        ttk.Button(
-            self.control_frame,
-            text="🌐 Servers",
-            command=self._open_server_settings,
-        ).pack(side=tk.LEFT)
-
-        # Define styles for colored buttons
-        self.root.tk_setPalette(background="#f0f0f0")
-
-        style = ttk.Style()
-        style.configure("Green.TButton", foreground="green")
-        style.configure("Red.TButton", foreground="red")
+        if self.terminal_manager.profile.supports_server_settings:
+            ttk.Button(
+                self.control_frame,
+                text="🌐 Servers",
+                command=self._open_server_settings,
+            ).pack(side=tk.LEFT)
+        else:
+            ttk.Label(
+                self.control_frame,
+                text="Server settings are only available for v2",
+                foreground="#666666",
+            ).pack(side=tk.LEFT)
 
     def _create_progress_bar(self):
-        """Create the download progress frame (initially hidden)"""
-        self.progress_frame = ttk.Frame(self.main_frame)
+        self.progress_frame = ttk.Frame(self.frame)
         self.progress_frame.pack(fill=tk.X, pady=(0, 10))
-        self.progress_frame.pack_forget()  # Hide initially
+        self.progress_frame.pack_forget()
 
-        # Progress label
         self.progress_label = ttk.Label(
-            self.progress_frame, text="Downloading ThetaTerminal.jar: 0%"
+            self.progress_frame,
+            text=f"Downloading {self.terminal_manager.profile.jar_file}: 0%",
         )
         self.progress_label.pack(anchor=tk.W, pady=(0, 5))
 
-        # Progress bar
         self.progress_bar = ttk.Progressbar(
             self.progress_frame, orient=tk.HORIZONTAL, length=100, mode="determinate"
         )
         self.progress_bar.pack(fill=tk.X)
 
     def _create_log_area(self):
-        """Create the log text area with controls"""
-        log_frame = ttk.Frame(self.main_frame)
+        log_frame = ttk.Frame(self.frame)
         log_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Log area label
         ttk.Label(log_frame, text="Log Output:").pack(anchor=tk.W)
 
-        # Create a frame for the text widget and scrollbar
         text_frame = ttk.Frame(log_frame)
         text_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Log text area with scrollbar
-        self.log_text = tk.Text(text_frame, wrap=tk.WORD, height=15)
+        self.log_text = tk.Text(text_frame, wrap=tk.WORD, height=15, state=tk.DISABLED)
         self.log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Add scrollbar
         scrollbar = ttk.Scrollbar(text_frame, command=self.log_text.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.log_text.config(yscrollcommand=scrollbar.set)
 
-        # Create log control buttons
         log_controls = ttk.Frame(log_frame)
         log_controls.pack(fill=tk.X, pady=(5, 0))
 
         ttk.Button(log_controls, text="Clear Log", command=self._clear_log).pack(
             side=tk.LEFT, padx=(0, 5)
         )
-        ttk.Button(log_controls, text="Copy to Clipboard", command=self._copy_log).pack(
-            side=tk.LEFT
-        )
+        ttk.Button(
+            log_controls,
+            text="Copy to Clipboard",
+            command=self._copy_log,
+        ).pack(side=tk.LEFT)
 
-    def _check_jar_file(self):
-        """Check if JAR file exists on startup"""
-        if not os.path.exists(self.terminal_manager.jar_file):
-            self._append_log(f"{self.terminal_manager.jar_file} not found.")
-            reply = messagebox.askyesno(
-                "File Missing",
-                f"{self.terminal_manager.jar_file} is not found. Do you want to download it now?",
-                parent=self.root,
-            )
-            if reply:
-                self._append_log("Starting download...")
-                self._update_ui_state_for_download(True)
-                self.terminal_manager._download_jar_file_async()
-                self.progress_frame.pack(
-                    fill=tk.X, pady=(0, 10), after=self.control_frame
-                )
-            else:
-                self._append_log(
-                    "Download cancelled. You'll need the JAR file to start the terminal."
-                )
+    def _request_start(self):
+        self.start_callback(self)
 
-    def _download_complete(self):
-        """Handle the download completion"""
-
-        # Use a separate thread to update UI state to avoid threading issues
-        def enable_ui():
-            time.sleep(0.5)  # Small delay to ensure all UI updates are processed
-            self._update_ui_state_for_download(False)
-            self._append_log("ThetaTerminal.jar is now ready to use.")
-
-            # Explicitly enable all input fields
-            self.root.after(100, self._force_enable_inputs)
-
-        threading.Thread(target=enable_ui, daemon=True).start()
-
-    def _force_enable_inputs(self):
-        """Force enable all input fields"""
-        self.username_entry.config(state=tk.NORMAL)
-        self.password_entry.config(state=tk.NORMAL)
-        self.show_password_btn.config(state=tk.NORMAL)
-        if not self.terminal_manager.is_running():
-            self.start_btn.config(state=tk.NORMAL)
-        self.root.update_idletasks()
-
-    def _update_ui_state_for_download(self, is_downloading):
-        """Update UI elements based on download state"""
-        state = tk.DISABLED if is_downloading else tk.NORMAL
-
-        # Update the input fields and buttons
-        self.username_entry.config(state=state)
-        self.password_entry.config(state=state)
-        self.show_password_btn.config(state=state)
-
-        # Only enable start button if not downloading and not running
-        if not is_downloading and not self.terminal_manager.is_running():
-            self.start_btn.config(state=tk.NORMAL)
-        else:
-            self.start_btn.config(state=tk.DISABLED)
-
-        # Force update
-        self.root.update_idletasks()
-
-    def _update_progress(self, percentage, downloaded, total_size):
-        """Update the progress bar and label"""
-        # Handle download completion
-        if percentage >= 100:
-            if self.progress_frame.winfo_ismapped():
-                self.progress_frame.pack_forget()
-                self._append_log("Download complete.")
-            return
-
-        # Show progress frame if not visible
-        if not self.progress_frame.winfo_ismapped():
-            self.progress_frame.pack(fill=tk.X, pady=(0, 10), after=self.control_frame)
-
-        # Format the label with progress information
-        if total_size > 0:
-            downloaded_mb = downloaded / (1024 * 1024)
-            total_mb = total_size / (1024 * 1024)
-            self.progress_label.config(
-                text=f"Downloading ThetaTerminal.jar: {percentage}% ({downloaded_mb:.1f} MB / {total_mb:.1f} MB)"
-            )
-        else:
-            self.progress_label.config(
-                text=f"Downloading ThetaTerminal.jar: {percentage}%"
-            )
-
-        # Update the progress bar
-        self.progress_bar["value"] = percentage
-
-        # Ensure the update is displayed immediately
-        self.root.update_idletasks()
-
-    def _start_terminal(self):
-        """Start the terminal with the given credentials"""
-        username = self.username_var.get()
+    def start_terminal(self):
+        username = self.username_var.get().strip()
         password = self.password_var.get()
 
         if not username or not password:
-            self._append_log("Error: Username and password are required")
+            self._append_log("Error: Username/email and password are required.")
             return
 
         success = self.terminal_manager.start_terminal(username, password)
@@ -452,48 +360,37 @@ class MainWindow:
             self._update_ui_state_for_download(True)
 
     def _stop_terminal(self):
-        """Stop the terminal if it's running"""
         if not self.terminal_manager.is_running():
             return
 
-        # Immediately update UI to show stopping state
         self.stop_btn.config(state=tk.DISABLED, text="■ Stopping...")
         self.start_btn.config(state=tk.DISABLED)
         self._append_log("Stopping terminal...")
+        self.frame.update_idletasks()
 
-        # Force UI update
-        self.root.update_idletasks()
-
-        # Set up a timeout to force UI update even if stop operation hangs
-        # Our simplified stop method has a 5s timeout, so give it a bit extra
         timeout_timer = threading.Timer(7.0, self._force_stop_complete)
         timeout_timer.daemon = True
         timeout_timer.start()
 
-        # Run stop operation in background thread to avoid blocking UI
         def stop_in_background():
             try:
                 success = self.terminal_manager.stop_terminal()
-                # Cancel the timeout timer since we completed normally
                 timeout_timer.cancel()
-                # Schedule UI update on main thread
-                self.root.after(0, lambda: self._on_stop_complete(success))
-            except Exception as e:
-                # Cancel the timeout timer
+                self.frame.after(0, lambda: self._on_stop_complete(success))
+            except Exception as exc:
                 timeout_timer.cancel()
-                # Schedule error handling on main thread
-                self.root.after(0, lambda: self._on_stop_error(str(e)))
+                self.frame.after(0, lambda: self._on_stop_error(str(exc)))
 
-        stop_thread = threading.Thread(target=stop_in_background, daemon=True)
-        stop_thread.start()
+        threading.Thread(target=stop_in_background, daemon=True).start()
 
     def _force_stop_complete(self):
-        """Force complete the stop operation if it takes too long"""
-        self._append_log("Stop operation timed out - forcing completion...")
-        self.root.after(0, lambda: self._on_stop_complete(False))
+        def complete():
+            self._append_log("Stop operation timed out - forcing completion...")
+            self._on_stop_complete(False)
+
+        self.frame.after(0, complete)
 
     def _on_stop_complete(self, success):
-        """Handle stop operation completion on main UI thread"""
         if success:
             self._append_log("Terminal stopped successfully.")
         else:
@@ -501,96 +398,149 @@ class MainWindow:
                 "Warning: Terminal stop operation may not have completed successfully."
             )
 
-        # Reset button states
         self.stop_btn.config(text="■ Stop")
         self._update_ui_state()
 
     def _on_stop_error(self, error_msg):
-        """Handle stop operation error on main UI thread"""
         self._append_log(f"Error stopping terminal: {error_msg}")
-
-        # Reset button states
         self.stop_btn.config(text="■ Stop")
         self._update_ui_state()
 
+    def _download_complete(self, success):
+        self.frame.after(0, lambda: self._finish_download_ui(success))
+
+    def _finish_download_ui(self, success):
+        self._update_ui_state_for_download(False)
+        if success:
+            self._append_log(
+                f"{self.terminal_manager.profile.jar_file} is now ready to use."
+            )
+        else:
+            self._append_log(
+                f"Failed to download {self.terminal_manager.profile.jar_file}."
+            )
+
+    def _update_ui_state_for_download(self, is_downloading):
+        state = tk.DISABLED if is_downloading else tk.NORMAL
+
+        self.username_entry.config(state=state)
+        self.password_entry.config(state=state)
+        self.show_password_btn.config(state=state)
+
+        if not is_downloading and not self.terminal_manager.is_running():
+            self.start_btn.config(state=tk.NORMAL)
+        else:
+            self.start_btn.config(state=tk.DISABLED)
+
+        if is_downloading and not self.progress_frame.winfo_ismapped():
+            self.progress_frame.pack(fill=tk.X, pady=(0, 10), after=self.control_frame)
+        elif not is_downloading and self.progress_frame.winfo_ismapped():
+            self.progress_frame.pack_forget()
+
+        self.frame.update_idletasks()
+
+    def _update_progress(self, percentage, downloaded, total_size):
+        self.frame.after(
+            0,
+            lambda: self._render_progress(percentage, downloaded, total_size),
+        )
+
+    def _render_progress(self, percentage, downloaded, total_size):
+        if percentage >= 100:
+            if self.progress_frame.winfo_ismapped():
+                self.progress_frame.pack_forget()
+                self._append_log("Download complete.")
+            return
+
+        if not self.progress_frame.winfo_ismapped():
+            self.progress_frame.pack(fill=tk.X, pady=(0, 10), after=self.control_frame)
+
+        jar_name = self.terminal_manager.profile.jar_file
+        if total_size > 0:
+            downloaded_mb = downloaded / (1024 * 1024)
+            total_mb = total_size / (1024 * 1024)
+            self.progress_label.config(
+                text=(
+                    f"Downloading {jar_name}: {percentage}% "
+                    f"({downloaded_mb:.1f} MB / {total_mb:.1f} MB)"
+                )
+            )
+        else:
+            self.progress_label.config(text=f"Downloading {jar_name}: {percentage}%")
+
+        self.progress_bar["value"] = percentage
+        self.frame.update_idletasks()
+
     def _update_ui_state(self):
-        """Update UI elements based on the terminal state"""
         running = self.terminal_manager.is_running()
         downloading = self.terminal_manager.get_downloading_status()
 
-        # If downloading, use download-specific UI state
         if downloading:
             self._update_ui_state_for_download(True)
             return
 
-        # Update button states
         if running:
             self.start_btn.config(state=tk.DISABLED)
             self.stop_btn.config(state=tk.NORMAL)
-
-            # Disable input fields while running
             self.username_entry.config(state=tk.DISABLED)
             self.password_entry.config(state=tk.DISABLED)
             self.show_password_btn.config(state=tk.DISABLED)
+            self.status_var.set(
+                f"{self.terminal_manager.profile.display_name} is currently running"
+            )
         else:
             self.start_btn.config(state=tk.NORMAL)
             self.stop_btn.config(state=tk.DISABLED)
-
-            # Enable input fields when not running
             self.username_entry.config(state=tk.NORMAL)
             self.password_entry.config(state=tk.NORMAL)
             self.show_password_btn.config(state=tk.NORMAL)
+            self.status_var.set(
+                f"{self.terminal_manager.profile.display_name} requires Java "
+                f"{self.terminal_manager.profile.java_min_version}+"
+            )
 
-        # Force update
-        self.root.update_idletasks()
+        self.frame.update_idletasks()
 
     def _append_log(self, message):
-        """Append a message to the log text area"""
+        self.frame.after(0, lambda: self._append_log_on_main_thread(message))
+
+    def _append_log_on_main_thread(self, message):
         self.log_text.config(state=tk.NORMAL)
         self.log_text.insert(tk.END, message + "\n")
-        self.log_text.see(tk.END)  # Scroll to the end
+        self.log_text.see(tk.END)
         self.log_text.config(state=tk.DISABLED)
 
     def _clear_log(self):
-        """Clear the log text area"""
         self.log_text.config(state=tk.NORMAL)
         self.log_text.delete(1.0, tk.END)
         self.log_text.config(state=tk.DISABLED)
 
     def _copy_log(self):
-        """Copy log contents to clipboard"""
-        log_content = self.log_text.get(1.0, tk.END)
-        pyperclip.copy(log_content)
+        pyperclip.copy(self.log_text.get(1.0, tk.END))
         self._append_log("Log copied to clipboard")
 
     def _open_logs_folder(self):
-        """Open the logs folder in file explorer"""
         success = self.terminal_manager.open_logs_folder()
         if not success:
             messagebox.showerror(
                 "Folder Not Found",
                 f"Logs folder not found at: {self.terminal_manager.logs_folder}",
-                parent=self.root,
+                parent=self.frame.winfo_toplevel(),
             )
 
     def _open_config_folder(self):
-        """Open the config folder in file explorer"""
         success = self.terminal_manager.open_config_folder()
         if not success:
             messagebox.showerror(
                 "Folder Not Found",
                 f"Config folder not found at: {self.terminal_manager.config_folder}",
-                parent=self.root,
+                parent=self.frame.winfo_toplevel(),
             )
 
     def _open_server_settings(self):
-        """Open the server settings dialog"""
-        ServerSettingsDialog(self.root, self.terminal_manager)
+        ServerSettingsDialog(self.frame.winfo_toplevel(), self.terminal_manager)
 
     def _auto_start_complete(self, success):
-        """Handle the auto-start completion"""
-
-        # Schedule UI update on the main thread
         def update_ui():
             if success:
                 self._append_log("Auto-start completed successfully.")
@@ -598,4 +548,84 @@ class MainWindow:
                 self._append_log("Auto-start failed.")
             self._update_ui_state()
 
-        self.root.after(0, update_ui)
+        self.frame.after(0, update_ui)
+
+
+class MainWindow:
+    def __init__(self, root, terminal_managers):
+        self.root = root
+        self.terminal_managers = terminal_managers
+        self.root.minsize(760, 500)
+
+        self.root.tk_setPalette(background="#f0f0f0")
+        style = ttk.Style()
+        style.configure("Green.TButton", foreground="green")
+        style.configure("Red.TButton", foreground="red")
+
+        self.main_frame = ttk.Frame(root, padding="10")
+        self.main_frame.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(
+            self.main_frame,
+            text="Manage ThetaTerminal v2 and ThetaTerminal v3 from one interface.",
+        ).pack(anchor=tk.W, pady=(0, 8))
+
+        self.notebook = ttk.Notebook(self.main_frame)
+        self.notebook.pack(fill=tk.BOTH, expand=True)
+
+        self.tabs = {}
+        for version_key, manager in self.terminal_managers.items():
+            tab = TerminalTab(self.notebook, manager, self._start_requested)
+            self.tabs[version_key] = tab
+            self.notebook.add(tab.frame, text=manager.profile.display_name)
+
+        self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
+        self._select_saved_tab()
+
+    def _select_saved_tab(self):
+        default_version = self.terminal_managers["v2"].get_selected_version()
+        keys = list(self.tabs.keys())
+        if default_version in keys:
+            self.notebook.select(keys.index(default_version))
+
+    def _on_tab_changed(self, _event=None):
+        version_key = self.get_active_version_key()
+        if version_key:
+            self.terminal_managers[version_key].set_selected_version(version_key)
+
+    def get_active_version_key(self):
+        selected_tab_id = self.notebook.select()
+        for version_key, tab in self.tabs.items():
+            if str(tab.frame) == selected_tab_id:
+                return version_key
+        return None
+
+    def get_active_tab(self):
+        version_key = self.get_active_version_key()
+        return self.tabs.get(version_key)
+
+    def any_other_manager_running(self, version_key):
+        return any(
+            key != version_key and manager.is_running()
+            for key, manager in self.terminal_managers.items()
+        )
+
+    def _start_requested(self, tab):
+        version_key = tab.terminal_manager.profile.key
+        self.terminal_managers[version_key].set_selected_version(version_key)
+
+        if self.any_other_manager_running(version_key):
+            messagebox.showwarning(
+                "Another Terminal Is Running",
+                (
+                    "Please stop the other ThetaTerminal version before starting this one.\n\n"
+                    "Running v2 and v3 at the same time may cause local port or resource conflicts."
+                ),
+                parent=self.root,
+            )
+            tab._append_log(
+                "Start blocked because another ThetaTerminal version is already running."
+            )
+            return
+
+        tab.start_terminal()
