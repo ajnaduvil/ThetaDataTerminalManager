@@ -2,6 +2,7 @@ import atexit
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -97,6 +98,8 @@ class TerminalManager:
 
         self.logs_folder = ""
         self.config_folder = ""
+        self.cached_java_major_version = None
+        self.cached_java_path = None
 
         self.load_config()
         self._refresh_runtime_paths()
@@ -194,6 +197,12 @@ class TerminalManager:
 
     def check_jar_file(self):
         return os.path.exists(self.profile.jar_path)
+
+    def _get_java_executable(self):
+        java_path = self.cached_java_path or shutil.which("java")
+        if java_path:
+            self.cached_java_path = java_path
+        return java_path
 
     def _refresh_runtime_paths(self):
         if self.profile.key == "v2":
@@ -341,15 +350,25 @@ class TerminalManager:
             return False
 
     def _get_java_major_version(self):
+        if self.cached_java_major_version is not None:
+            return self.cached_java_major_version
+
+        java_path = self._get_java_executable()
+        if not java_path:
+            return None
+
         try:
             result = subprocess.run(
-                ["java", "-version"],
+                [java_path, "-version"],
                 capture_output=True,
                 text=True,
-                timeout=5.0,
+                timeout=15.0,
             )
         except FileNotFoundError:
             return None
+        except subprocess.TimeoutExpired as exc:
+            self._log(f"Unable to determine Java version: {exc}")
+            return self.cached_java_major_version
         except Exception as exc:
             self._log(f"Unable to determine Java version: {exc}")
             return None
@@ -357,21 +376,30 @@ class TerminalManager:
         output = f"{result.stdout}\n{result.stderr}"
         match = re.search(r'version\s+"(?P<version>\d+)(?:\.\d+)?', output)
         if match:
-            return int(match.group("version"))
+            self.cached_java_major_version = int(match.group("version"))
+            return self.cached_java_major_version
 
         match = re.search(r"openjdk\s+(?P<version>\d+)", output, re.IGNORECASE)
         if match:
-            return int(match.group("version"))
+            self.cached_java_major_version = int(match.group("version"))
+            return self.cached_java_major_version
 
         return None
 
     def _validate_java_requirement(self):
+        java_path = self._get_java_executable()
+        if not java_path:
+            self._log(
+                f"Java could not be found. {self.profile.display_name} requires Java {self.profile.java_min_version}+ ."
+            )
+            return False
+
         java_major = self._get_java_major_version()
         if java_major is None:
             self._log(
-                f"Java could not be found. {self.profile.display_name} requires Java {self.profile.java_min_version}+."
+                f"Java version could not be verified for {java_path}. Proceeding with the detected Java executable."
             )
-            return False
+            return True
 
         if java_major < self.profile.java_min_version:
             self._log(
@@ -391,13 +419,17 @@ class TerminalManager:
         return creds_path
 
     def _build_launch_command(self, username, password):
+        java_path = self._get_java_executable()
+        if not java_path:
+            raise FileNotFoundError("Java executable could not be found on PATH.")
+
         jar_name = os.path.basename(self.profile.jar_path)
 
         if self.profile.launch_mode == "cli_credentials":
-            return ["java", "-jar", jar_name, username, password]
+            return [java_path, "-jar", jar_name, username, password]
 
         self._write_v3_creds_file(username, password)
-        return ["java", "-jar", jar_name]
+        return [java_path, "-jar", jar_name]
 
     def start_terminal(self, username, password):
         """Start the configured terminal process."""
@@ -644,11 +676,11 @@ class TerminalManager:
         try:
             content, encoding = self._read_text_with_fallback(properties_path)
             for line in content.splitlines():
-                    line = line.strip()
-                    if line.startswith("MDDS_REGION="):
-                        self.current_mdds_region = line.split("=", 1)[1]
-                    elif line.startswith("FPSS_REGION="):
-                        self.current_fpss_region = line.split("=", 1)[1]
+                line = line.strip()
+                if line.startswith("MDDS_REGION="):
+                    self.current_mdds_region = line.split("=", 1)[1]
+                elif line.startswith("FPSS_REGION="):
+                    self.current_fpss_region = line.split("=", 1)[1]
 
             self._log(
                 "Current server settings loaded: "
