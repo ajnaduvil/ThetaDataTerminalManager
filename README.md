@@ -13,12 +13,13 @@ This section is for users who just want to use the ThetaData Terminal Manager ap
 #### Quick Start Guide
 
 1. **Download the Application**
-   - Download the latest `ThetaDataTerminalManager.exe` from the releases section
+   - Download the latest release zip from the GitHub releases section
+   - Extract the zip and run `ThetaDataTerminalManager.exe`
    - No installation required - it's a standalone executable
 
 2. **First Time Setup**
    - Double-click `ThetaDataTerminalManager.exe` to launch the application
-   - Use the **ThetaTerminal v2** or **ThetaTerminal v3** tab depending on which runtime you want to manage
+   - The **ThetaTerminal v3** tab opens first by default, with **ThetaTerminal v2** available on the second tab
    - The application will download the required JAR file automatically when you click **Start** if it is not already present
    
    ![First Launch Screenshot](docs/first-launch.png)
@@ -27,11 +28,11 @@ This section is for users who just want to use the ThetaData Terminal Manager ap
    
 
 3. **Using the Application**
-   - Choose either the **ThetaTerminal v2** tab or **ThetaTerminal v3** tab
+   - Choose either the **ThetaTerminal v3** tab or **ThetaTerminal v2** tab
    - Enter your [ThetaData](https://www.thetadata.net/) username/email and password in the provided fields   
    ![Main Interface Screenshot](docs/main-interface.png)
    
-   - **Tabs**: Use separate tabs for v2 and v3 management
+   - **Tabs**: Use separate tabs for v3 and v2 management
    - **Username/Password**: Enter your ThetaData credentials
    - **Show Password**: Check this box to reveal your password while typing
    - **Save Credentials**: Credentials are saved per version for future use
@@ -49,7 +50,7 @@ This section is for users who just want to use the ThetaData Terminal Manager ap
    - **v2** runs with the legacy CLI credential flow
    - **v3** writes a `creds.txt` file beside `ThetaTerminalv3.jar` and launches using `java -jar ThetaTerminalv3.jar`
    - Both versions can be started independently from their own tabs
-   - Each tab shows a red or green status dot so you can quickly see whether that terminal is running
+   - Each tab shows a green status dot when running and a gray status dot when stopped
    - The log area will show the terminal's output
    - Wait for the terminal to fully initialize before using it
    
@@ -123,12 +124,12 @@ This section contains technical information for developers who want to build, mo
 
 ## Features
 
-- Supports both ThetaTerminal v2 and ThetaTerminal v3 in one application
+- Supports both ThetaTerminal v3 and ThetaTerminal v2 in one application
 - Automatically downloads the required terminal JAR if not present
 - Saves and loads credentials separately for v2 and v3
 - Starts and stops each terminal version with dedicated controls
 - Uses a version-specific log view, config folder, and runtime status
-- Shows a red/green status indicator on each terminal tab
+- Shows a green/gray status indicator on each terminal tab
 - Provides the v2 server settings editor for MDDS/FPSS configuration
 - Writes `creds.txt` automatically for ThetaTerminal v3 launches
 
@@ -177,7 +178,7 @@ source .venv/bin/activate  # On Unix/macOS
 python main.py
 ```
 
-1. Open the v2 or v3 tab
+1. Open the v3 or v2 tab
 2. Enter your ThetaData username/email and password
 3. Click "Start" to launch the selected terminal version
 4. The log area will display output from that terminal
@@ -250,6 +251,34 @@ You can also build with PyInstaller directly:
 ```
 uv run pyinstaller --name=ThetaDataTerminalManager --onefile --windowed main.py
 ```
+
+## Release Packaging
+
+To prepare a GitHub release package in the `releases` folder:
+
+### Using the release packaging script (recommended)
+
+1. Ensure dependencies are installed:
+   ```
+   uv sync
+   ```
+
+2. On Windows, run:
+   ```
+   package_release.bat
+   ```
+
+   Or run the Python script directly:
+   ```
+   uv run python package_release.py
+   ```
+
+3. The script will:
+   - Build the executable
+   - Create `releases/ThetaDataTerminalManager-v<version>/`
+   - Copy the executable, `README.md`, release notes, and license into that folder
+   - Create `releases/ThetaDataTerminalManager-v<version>.zip`
+   - Generate `releases/release_info_v<version>.txt` with GitHub upload instructions
 
 ## Structure
 

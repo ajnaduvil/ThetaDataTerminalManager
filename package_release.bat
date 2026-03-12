@@ -29,7 +29,7 @@ if %ERRORLEVEL% EQU 0 (
     echo ============================================================
     echo.
     echo Your release package is ready for GitHub upload.
-    echo Check the generated files in the current directory.
+    echo Check the generated files in the releases folder.
     echo.
 ) else (
     echo.

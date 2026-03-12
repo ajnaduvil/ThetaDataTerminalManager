@@ -60,7 +60,7 @@ def create_release_folder(version):
     return full_path
 
 
-def copy_release_files(release_folder):
+def copy_release_files(release_folder, exe_path):
     """Copy necessary files to the release folder"""
     print("Copying release files...")
 
@@ -69,7 +69,6 @@ def copy_release_files(release_folder):
     exe_name = (
         "ThetaDataTerminalManager.exe" if is_windows else "ThetaDataTerminalManager"
     )
-    exe_path = os.path.join("dist", exe_name)
 
     if not os.path.exists(exe_path):
         raise FileNotFoundError(
@@ -212,11 +211,12 @@ def main():
 
         # Build the executable
         print("\nStep 1: Building executable...")
-        if not build_executable():
-            print("❌ Build failed! Cannot proceed with packaging.")
+        built_exe_path = build_executable()
+        if not built_exe_path:
+            print("Build failed! Cannot proceed with packaging.")
             return False
 
-        print("✅ Build completed successfully!")
+        print("Build completed successfully!")
 
         # Create release folder
         print("\nStep 2: Creating release folder...")
@@ -224,7 +224,7 @@ def main():
 
         # Copy files to release folder
         print("\nStep 3: Copying release files...")
-        copy_release_files(release_folder)
+        copy_release_files(release_folder, built_exe_path)
 
         # Create zip package
         print("\nStep 4: Creating zip package...")
@@ -235,18 +235,18 @@ def main():
         info_file = generate_release_info(zip_name, version)
 
         print("\n" + "=" * 60)
-        print("✅ PACKAGING COMPLETED SUCCESSFULLY!")
+        print("PACKAGING COMPLETED SUCCESSFULLY!")
         print("=" * 60)
-        print(f"📦 Release package: {zip_name}")
-        print(f"📋 Release info: {info_file}")
-        print(f"📁 Release folder: {release_folder}")
+        print(f"Release package: {zip_name}")
+        print(f"Release info: {info_file}")
+        print(f"Release folder: {release_folder}")
         print("\nYour release is ready for GitHub!")
         print("Check the release_info file for upload instructions.")
 
         return True
 
     except Exception as e:
-        print(f"\n❌ Error during packaging: {e}")
+        print(f"\nError during packaging: {e}")
         return False
 
 

@@ -6,6 +6,13 @@ import platform
 from version_info import write_version_file, get_version_string
 
 
+def _ensure_clean_directory(path):
+    """Recreate a directory, tolerating cases where an existing path is locked."""
+    if os.path.exists(path):
+        shutil.rmtree(path)
+    os.makedirs(path, exist_ok=True)
+
+
 def build_executable():
     """Build the executable using PyInstaller"""
     print("Building ThetaData Terminal Manager executable...")
@@ -14,12 +21,27 @@ def build_executable():
     version = get_version_string()
     print(f"Version: {version}")
 
-    # Clean up previous build artifacts if they exist
-    if os.path.exists("dist"):
-        print("Cleaning up previous build files...")
-        shutil.rmtree("dist")
-    if os.path.exists("build"):
-        shutil.rmtree("build")
+    dist_dir = "dist"
+    build_dir = "build"
+
+    # If an existing dist executable is in use, build into alternate folders
+    # so release packaging can still proceed.
+    try:
+        if os.path.exists("dist"):
+            print("Cleaning up previous build files...")
+            shutil.rmtree("dist")
+        if os.path.exists("build"):
+            shutil.rmtree("build")
+    except PermissionError:
+        dist_dir = "dist_release"
+        build_dir = "build_release"
+        print(
+            "Existing dist output is locked. "
+            f"Building into alternate folders: {dist_dir}, {build_dir}"
+        )
+        _ensure_clean_directory(dist_dir)
+        _ensure_clean_directory(build_dir)
+
     for file in os.listdir("."):
         if file.endswith(".spec"):
             os.remove(file)
@@ -70,6 +92,8 @@ def build_executable():
         "--name=ThetaDataTerminalManager",
         "--onefile",
         "--windowed",
+        f"--distpath={dist_dir}",
+        f"--workpath={build_dir}",
         f"--version-file={version_file}",  # Add version file
     ]
 
@@ -108,7 +132,14 @@ def build_executable():
             print("Attempting to build with spec file...")
             if os.path.exists("ThetaDataTerminalManager.spec"):
                 spec_result = subprocess.run(
-                    ["uv", "run", "pyinstaller", "ThetaDataTerminalManager.spec"],
+                    [
+                        "uv",
+                        "run",
+                        "pyinstaller",
+                        f"--distpath={dist_dir}",
+                        f"--workpath={build_dir}",
+                        "ThetaDataTerminalManager.spec",
+                    ],
                     capture_output=True,
                     text=True,
                 )
@@ -123,7 +154,7 @@ def build_executable():
 
     # Check if executable was created
     exe_path = os.path.join(
-        "dist",
+        dist_dir,
         "ThetaDataTerminalManager.exe" if is_windows else "ThetaDataTerminalManager",
     )
     if os.path.exists(exe_path):
@@ -136,10 +167,10 @@ def build_executable():
             os.remove(version_file)
             print("Cleaned up temporary version file")
 
-        return True
+        return os.path.abspath(exe_path)
     else:
         print(f"Build process completed, but executable not found at {exe_path}")
-        return False
+        return None
 
 
 if __name__ == "__main__":
